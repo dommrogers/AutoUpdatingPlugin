@@ -1,6 +1,6 @@
 {
-	"Version": "1.2.0",
-	"Download": "https://github.com/ds5678/AutoUpdatingPlugin/releases/latest/download/AutoUpdatingPlugin.dll",
+	"Version": "1.3.0",
+	"Download": "https://github.com/dommrogers/AutoUpdatingPlugin/releases/latest/download/AutoUpdatingPlugin.dll",
 	"GameMinVersion": "1.99",
 	"GameMaxVersion": "99.99",
 	"MelonLoaderMinVersion": "0.5.4.0",
