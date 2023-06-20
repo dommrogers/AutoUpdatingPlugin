@@ -1,5 +1,6 @@
 ﻿using MelonLoader.ICSharpCode.SharpZipLib.Zip;
 using System.IO;
+using static MelonLoader.ICSharpCode.SharpZipLib.Zip.FastZip;
 
 namespace AutoUpdatingPlugin
 {
@@ -17,6 +18,7 @@ namespace AutoUpdatingPlugin
 		{
 			string targetDir = Path.GetDirectoryName(zipFilePath);
 			FastZip fastZip = new FastZip();
+			fastZip.CreateEmptyDirectories = true;
 			string fileFilter = null;
 			// Will always overwrite if target filenames already exist
 			fastZip.ExtractZip(zipFilePath, targetDir, fileFilter);

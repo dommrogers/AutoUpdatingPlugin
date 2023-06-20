@@ -10,7 +10,7 @@ namespace AutoUpdatingPlugin
 		static FileUtils()
 		{
 #if NET6_0_OR_GREATER
-			GameDirectory = @"E:\Games\TLD400";
+			GameDirectory = @"C:\Program Files (x86)\Steam\steamapps\common\TheLongDark";
 #else
             GameDirectory = MelonLoader.MelonUtils.GameDirectory;
 #endif
@@ -26,6 +26,13 @@ namespace AutoUpdatingPlugin
 			return string.IsNullOrWhiteSpace(link)
 				? throw new ArgumentException("Invalid link argument")
 				: Path.Combine(ModsFolder, Path.GetFileName(link));
+		}
+
+		public static string GetDestinationPlugin(string link)
+		{
+			return string.IsNullOrWhiteSpace(link)
+				? throw new ArgumentException("Invalid link argument")
+				: Path.Combine(PluginsFolder, Path.GetFileName(link));
 		}
 
 		internal static string GetPathSelf()

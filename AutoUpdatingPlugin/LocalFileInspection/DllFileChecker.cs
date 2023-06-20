@@ -7,10 +7,8 @@ namespace AutoUpdatingPlugin
 {
 	internal static class DllFileChecker
 	{
-		internal static void ScanForDllFiles()
+		internal static void ScanForDllFiles(string basedirectory)
 		{
-			string basedirectory = FileUtils.ModsFolder;
-
 			if (!Directory.Exists(basedirectory))
 			{
 				Logger.Msg("No Mods folder. Creating...");

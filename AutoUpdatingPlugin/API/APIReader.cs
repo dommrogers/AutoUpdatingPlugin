@@ -25,6 +25,7 @@ namespace AutoUpdatingPlugin
 				apiMod.name = modData["Name"];
 				Logger.Msg(apiMod.name);
 				apiMod.version = (VersionData)(string)modData["Version"];
+				apiMod.type = (modData["Type"] == null) ? "" : modData["Type"];
 				apiMod.aliases = MakeStringArray(modData["Aliases"] as ProxyArray);
 				apiMod.dependencies = MakeStringArray(modData["Dependencies"] as ProxyArray);
 				apiMod.enableUpdate = modData["Updater"]["enable_update"];

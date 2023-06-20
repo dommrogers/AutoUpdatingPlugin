@@ -46,7 +46,7 @@ namespace AutoUpdatingPlugin
 			return result.ToArray();
 		}
 
-		public static void InstallAllMissingDependencies()
+		public static int InstallAllMissingDependencies()
 		{
 			Logger.Msg("Checking for missing dependencies...");
 
@@ -68,6 +68,8 @@ namespace AutoUpdatingPlugin
 				int progressTotal = (int)((i + 1) / (double)toUpdateCount * 100);
 				Logger.Msg($"Progress: {i + 1}/{toUpdateCount} -> {progressTotal}%");
 			}
+
+			return toUpdateCount;
 		}
 
 		private static void InstallMissingDependency(APIMod apiMod)
@@ -104,8 +106,13 @@ namespace AutoUpdatingPlugin
 						{
 							Thread.Sleep(50);
 						}
-
-						downloadedData.Add((FileUtils.GetDestination(link), buffer));
+						if (apiMod.type.ToLower() == "plugin")
+						{
+							downloadedData.Add((FileUtils.GetDestinationPlugin(link), buffer));
+						}
+						else {
+							downloadedData.Add((FileUtils.GetDestination(link), buffer));
+						}
 					}
 
 

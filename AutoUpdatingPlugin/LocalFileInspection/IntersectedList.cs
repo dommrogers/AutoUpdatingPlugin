@@ -10,24 +10,29 @@ namespace AutoUpdatingPlugin
 
 		internal static void GenerateLists()
 		{
+
+			stringApiMods.Clear();
+			stringInstalledMods.Clear();
+			installedApiMods.Clear();
+
 			Logger.Msg("Generating an intersection of installed mods and the supported api...");
 			foreach (KeyValuePair<string, InstalledModDetail> installedMod in InstalledModList.installedMods)
 			{
 				bool foundApiEntry = false;
 				foreach (KeyValuePair<string, APIMod> remoteMod in APIList.supportedMods)
 				{
-					if (installedMod.Key == remoteMod.Key)
+					if (installedMod.Key.ToLower() == remoteMod.Key.ToLower())
 					{
 						foundApiEntry = true;
-						stringApiMods.Add(remoteMod.Key, remoteMod.Value);
-						stringInstalledMods.Add(installedMod.Key, installedMod.Value);
-						installedApiMods.Add(installedMod.Value, remoteMod.Value);
+						stringApiMods.TryAdd(remoteMod.Key.ToLower(), remoteMod.Value);
+						stringInstalledMods.TryAdd(installedMod.Key.ToLower(), installedMod.Value);
+						installedApiMods.TryAdd(installedMod.Value, remoteMod.Value);
 						break;
 					}
 				}
 				if (!foundApiEntry)
 				{
-					Logger.Warning($"There is no associated API entry for '{installedMod.Key}'");
+					Logger.Warning($"There is no associated API entry for '{installedMod.Key.ToLower()}'");
 				}
 			}
 			Logger.Msg($"Found {stringApiMods.Count} supported mods installed.");

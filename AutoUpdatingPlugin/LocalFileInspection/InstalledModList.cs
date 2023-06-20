@@ -28,7 +28,8 @@ namespace AutoUpdatingPlugin
 			installedMods.Clear();
 
 			//has to run first
-			DllFileChecker.ScanForDllFiles();
+			DllFileChecker.ScanForDllFiles(FileUtils.ModsFolder);
+			DllFileChecker.ScanForDllFiles(FileUtils.PluginsFolder);
 
 			ModComponentScanner.ScanForModComponentFiles();
 

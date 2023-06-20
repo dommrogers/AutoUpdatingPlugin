@@ -8,6 +8,7 @@ namespace AutoUpdatingPlugin
 	{
 		public string name;
 		public VersionData version;
+		public string type;
 		public bool enableUpdate;
 		public string[] downloadlinks;
 		public string[] aliases;

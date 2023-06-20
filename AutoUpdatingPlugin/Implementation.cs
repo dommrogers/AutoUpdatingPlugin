@@ -27,11 +27,22 @@
             }
         }
 #endif
+
+		
+
 		public static void UpdateMods()
 		{
+			// extract first so we have a full idea of what is installed
 			ZipFileHandler.ExtractZipFilesInDirectory(FileUtils.ModsFolder);
 
 			APIList.FetchRemoteMods();
+
+			UpdateModsStage2();
+		}
+
+		public static void UpdateModsStage2()
+		{
+			
 
 			InstalledModList.ScanModFolder();
 
@@ -39,9 +50,15 @@
 
 			ModUpdater.DownloadAndUpdateMods();
 
-			DependencyHandler.InstallAllMissingDependencies();
+			int depCount = DependencyHandler.InstallAllMissingDependencies();
 
 			ZipFileHandler.ExtractZipFilesInDirectory(FileUtils.ModsFolder);
+
+			// perform update again if we have installed any deps.
+			if (depCount > 0)
+			{
+				UpdateModsStage2();
+			}
 		}
 	}
 }
