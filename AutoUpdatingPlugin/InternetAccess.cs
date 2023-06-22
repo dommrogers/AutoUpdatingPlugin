@@ -6,8 +6,8 @@ namespace AutoUpdatingPlugin
 {
 	internal static class InternetAccess
 	{
-		internal const string DownloadURL = @"https://github.com/ds5678/AutoUpdatingPlugin/releases/latest/download/AutoUpdatingPlugin.dll";
-		private const string VersionURL = @"https://raw.githubusercontent.com/ds5678/AutoUpdatingPlugin/master/Version.json";
+		internal const string DownloadURL = @"https://github.com/dommrogers/AutoUpdatingPlugin/releases/latest/download/AutoUpdatingPlugin.dll";
+		private const string VersionURL = @"https://raw.githubusercontent.com/dommrogers/AutoUpdatingPlugin/master/Version.json";
 
 		internal static string GetVersionJsonText()
 		{
