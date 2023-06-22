@@ -9,11 +9,7 @@ namespace AutoUpdatingPlugin
 	{
 		static FileUtils()
 		{
-#if NET6_0_OR_GREATER
-			GameDirectory = @"C:\Program Files (x86)\Steam\steamapps\common\TheLongDark";
-#else
             GameDirectory = MelonLoader.MelonUtils.GameDirectory;
-#endif
 			PluginsFolder = Path.Combine(GameDirectory, "Plugins");
 			ModsFolder = Path.Combine(GameDirectory, "Mods");
 		}
