@@ -1,10 +1,8 @@
-﻿namespace AutoUpdatingPlugin
+﻿using MelonLoader;
+
+namespace AutoUpdatingPlugin
 {
-#if NET6_0_OR_GREATER
-	public static class Implementation
-	{
-#else
-    internal sealed class Implementation : MelonLoader.MelonPlugin
+    internal sealed class Implementation : MelonPlugin
     {
         public override void OnPreInitialization()
         {
@@ -25,8 +23,10 @@
             {
                 Logger.Error("Failed to update mods:\n" + e);
             }
+
+			UpdateMods();
+
         }
-#endif
 
 		
 
