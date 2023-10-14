@@ -1,9 +1,13 @@
 ﻿using MelonLoader;
 
+[assembly: MelonPriority(-999)]
 namespace AutoUpdatingPlugin
 {
     internal sealed class Implementation : MelonPlugin
     {
+
+		static int loopCount = 0;
+
         public override void OnPreInitialization()
         {
             try
@@ -42,7 +46,13 @@ namespace AutoUpdatingPlugin
 
 		public static void UpdateModsStage2()
 		{
-			
+			loopCount++;
+
+			if (loopCount >= 5)
+			{
+				Logger.Error("Max loops of 5 hit, stopping...");
+				return;
+			}
 
 			InstalledModList.ScanModFolder();
 

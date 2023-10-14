@@ -37,7 +37,7 @@ namespace AutoUpdatingPlugin
 					{
 						string? modName;
 						string? modVersion;
-						using (AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(filename, new ReaderParameters { ReadWrite = true }))
+						using (AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(filename))
 						{
 
 							CustomAttribute? melonInfoAttribute = assembly.CustomAttributes.FirstOrDefault(a =>

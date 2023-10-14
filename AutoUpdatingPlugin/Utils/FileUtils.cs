@@ -1,5 +1,6 @@
 ﻿using Mono.Cecil;
 using System;
+using System.ComponentModel.Design.Serialization;
 using System.IO;
 using System.Linq;
 
@@ -33,18 +34,27 @@ namespace AutoUpdatingPlugin
 
 		internal static string GetPathSelf()
 		{
+
+			return Path.Combine(FileUtils.PluginsFolder, BuildInfo.Name + ".dll");
+
 			foreach (string filename in Directory.GetFiles(PluginsFolder, "*.dll"))
 			{
 				try
 				{
-					using AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(filename, new ReaderParameters { ReadWrite = true });
+					using AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(filename);
 
 					CustomAttribute? melonInfoAttribute = assembly.CustomAttributes.FirstOrDefault(a =>
 						a.AttributeType.Name == "MelonModInfoAttribute" || a.AttributeType.Name == "MelonInfoAttribute");
 
 					if (melonInfoAttribute == null)
 					{
+						Logger.Msg("melonInfoAttribute = null");
 						continue;
+					}
+
+					foreach (CustomAttributeArgument caa in melonInfoAttribute.ConstructorArguments)
+					{
+						Logger.Msg($"{filename} -> {caa.Value}");
 					}
 
 					string? name = melonInfoAttribute.ConstructorArguments[1].Value as string;
