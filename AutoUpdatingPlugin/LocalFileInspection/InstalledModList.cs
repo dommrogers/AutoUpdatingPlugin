@@ -24,7 +24,7 @@ namespace AutoUpdatingPlugin
 
 		internal static void ScanModFolder()
 		{
-			Logger.Msg("Scanning for installed mods...");
+//			Logger.Msg("Scanning for installed mods...");
 			installedMods.Clear();
 
 			//has to run first
@@ -33,7 +33,7 @@ namespace AutoUpdatingPlugin
 
 			ModComponentScanner.ScanForModComponentFiles();
 
-			Logger.Msg("Found " + installedMods.Count + " unique non-dev mods installed");
+			Logger.Minor("Found " + installedMods.Count + " unique non-dev mods installed");
 		}
 	}
 }

@@ -15,7 +15,7 @@ namespace AutoUpdatingPlugin
 			stringInstalledMods.Clear();
 			installedApiMods.Clear();
 
-			Logger.Msg("Generating an intersection of installed mods and the supported api...");
+//			Logger.Msg("Generating an intersection of installed mods and the supported api...");
 			foreach (KeyValuePair<string, InstalledModDetail> installedMod in InstalledModList.installedMods)
 			{
 				bool foundApiEntry = false;
@@ -35,7 +35,7 @@ namespace AutoUpdatingPlugin
 					Logger.Warning($"There is no associated API entry for '{installedMod.Key.ToLower()}'");
 				}
 			}
-			Logger.Msg($"Found {stringApiMods.Count} supported mods installed.");
+			Logger.Minor($"Found {stringApiMods.Count} supported mods installed.");
 		}
 	}
 }

@@ -48,13 +48,16 @@ namespace AutoUpdatingPlugin
 
 		public static int InstallAllMissingDependencies()
 		{
-			Logger.Msg("Checking for missing dependencies...");
+//			Logger.Msg("Checking for missing dependencies...");
 
 			ValidateDependencies();
 
 			APIMod[]? toInstall = GetMissingDependencies();
 
-			Logger.Msg($"Found {toInstall.Length} missing dependencies.");
+			if (toInstall.Length > 0)
+			{
+				Logger.Warning($"Found {toInstall.Length} missing dependencies.");
+			}
 
 			int toUpdateCount = toInstall.Length;
 			for (int i = 0; i < toUpdateCount; ++i)
@@ -66,7 +69,7 @@ namespace AutoUpdatingPlugin
 				InstallMissingDependency(apiMod);
 
 				int progressTotal = (int)((i + 1) / (double)toUpdateCount * 100);
-				Logger.Msg($"Progress: {i + 1}/{toUpdateCount} -> {progressTotal}%");
+				Logger.Minor($"Progress: {i + 1}/{toUpdateCount} -> {progressTotal}%");
 			}
 
 			return toUpdateCount;

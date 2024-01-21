@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 
@@ -15,20 +16,26 @@ namespace AutoUpdatingPlugin
 		internal static readonly Dictionary<string, APIMod> supportedMods = new Dictionary<string, APIMod>();
 		internal static void FetchRemoteMods()
 		{
-			Logger.Msg("Fetching remote mods...");
+			Stopwatch sw = new Stopwatch();
+			sw.Start();
+//			Logger.Minor("Fetching remote mods...");
 			string apiResponse = "";
 			using (WebClient? client = new WebClient())
 			{
 				client.Headers["User-Agent"] = "AutoUpdatingPlugin";
-				Logger.Msg("Attempting to download from API site...");
+	//			Logger.Minor("Attempting to download from API site...");
 				apiResponse = client.DownloadString("http://tld.xpazeapps.com/api.json");
 			}
-
-			Logger.Msg("Downloaded from API site. Attempting to parse data...");
+			Logger.Msg($"Downloaded mod API data ({(float)sw.ElapsedMilliseconds/1000:N2}s)");
 
 			APIMod[] apiMods = APIReader.Deserialize(apiResponse);
 
 			supportedMods.Clear();
+
+			List<string> disabledByAuthor = new List<string>();
+			List<string> disabledByLargeFile = new List<string>();
+			List<string> disabledNoValidLink = new List<string>();
+
 
 			foreach (APIMod mod in apiMods)
 			{
@@ -36,19 +43,22 @@ namespace AutoUpdatingPlugin
 
 				if (!mod.enableUpdate)
 				{
-					Logger.Msg($"Automatic updating for {mod.name} has been disabled by the mod author.");
+					disabledByAuthor.Add(mod.name);
+//					Logger.Msg($"Automatic updating for {mod.name} has been disabled by the mod author.");
 					continue;
 				}
 
 				if (mod.ContainsModSceneFile())
 				{
-					Logger.Msg($"Automatic updating for {mod.name} has been disabled due to potentially large file sizes.");
+					disabledByLargeFile.Add(mod.name);
+//					Logger.Msg($"Automatic updating for {mod.name} has been disabled due to potentially large file sizes.");
 					continue;
 				}
 
 				if (mod.downloadlinks.Length == 0)
 				{
-					Logger.Msg($"Automatic updating for {mod.name} has been disabled due to having no valid download links.");
+					disabledNoValidLink.Add(mod.name);
+//					Logger.Msg($"Automatic updating for {mod.name} has been disabled due to having no valid download links.");
 					continue;
 				}
 
@@ -65,7 +75,23 @@ namespace AutoUpdatingPlugin
 				supportedMods.Add(mod.name, mod);
 			}
 
-			Logger.Msg("API returned " + apiMods.Length + " mods, including " + supportedMods.Count + " supported mods.");
+			if (disabledByAuthor.Count > 0)
+			{
+				Logger.Msg($"# Update Disabled - By Author:");
+				Logger.Minor(string.Join(", ", disabledByAuthor));
+			}
+			if (disabledByLargeFile.Count > 0)
+			{
+				Logger.Msg($"# Update Disabled - Has Large Files:");
+				Logger.Minor(string.Join(", ", disabledByLargeFile));
+			}
+			if (disabledNoValidLink.Count > 0)
+			{
+				Logger.Msg($"# Update Disabled - No Valid Link:");
+				Logger.Minor(string.Join(", ", disabledNoValidLink));
+			}
+			sw.Stop();
+			Logger.Msg("API Mods " + apiMods.Length + ", Supported " + supportedMods.Count + $" ({(float)sw.ElapsedMilliseconds/1000:N2}s)");
 		}
 		internal static string GetNewModName(string currentName)
 		{

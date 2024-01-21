@@ -18,12 +18,15 @@ namespace AutoUpdatingPlugin
 
 			ProxyObject mods = (ProxyObject)JSON.Load(text);
 
+			List<string> inApi = new List<string>();
+
 			foreach (KeyValuePair<string, Variant> mod in mods)
 			{
 				ProxyObject modData = (ProxyObject)mod.Value;
 				APIMod apiMod = new APIMod();
 				apiMod.name = modData["Name"];
-				Logger.Msg(apiMod.name);
+				//				Logger.Msg(apiMod.name);
+				inApi.Add(apiMod.name);
 				apiMod.version = (VersionData)(string)modData["Version"];
 				apiMod.type = (modData["Type"] == null) ? "" : modData["Type"];
 				apiMod.aliases = MakeStringArray(modData["Aliases"] as ProxyArray);
@@ -31,6 +34,12 @@ namespace AutoUpdatingPlugin
 				apiMod.enableUpdate = modData["Updater"]["enable_update"];
 				apiMod.downloadlinks = MakeDownloadArray(modData["Updater"]["downloads"] as ProxyArray);
 				result.Add(apiMod);
+			}
+
+			if (inApi.Count > 0)
+			{
+				//Logger.Msg("Mods Found in API Response:");
+				//Logger.Msg("# " + string.Join(", ",inApi));
 			}
 
 			return result.ToArray();

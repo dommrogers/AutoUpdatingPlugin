@@ -16,21 +16,21 @@ namespace AutoUpdatingPlugin
 		{
 			if (toUpdateCount == 0)
 			{
-				Logger.Msg("All installed mods are already up to date !");
+				Logger.Success("All installed mods are already up to date !");
 			}
 			else if (failedUpdates.Count > 0)
 			{
-				Logger.Msg($"{failedUpdates.Count} mods failed to update ({toUpdateCount - failedUpdates.Count}/{toUpdateCount} succeeded)");
+				Logger.Warning($"{failedUpdates.Count} mods failed to update ({toUpdateCount - failedUpdates.Count}/{toUpdateCount} succeeded)");
 			}
 			else
 			{
-				Logger.Msg("Successfully updated " + toUpdateCount + " mods !");
+				Logger.Success("Successfully updated " + toUpdateCount + " mods !");
 			}
 		}
 
 		internal static void DownloadAndUpdateMods()
 		{
-			Logger.Msg("Checking for outdated mods...");
+//			Logger.Minor("Checking for outdated mods...");
 			List<Tuple<InstalledModDetail, APIMod>> toUpdate = new List<Tuple<InstalledModDetail, APIMod>>();
 
 			// List all installed mods that can be updated
@@ -59,7 +59,10 @@ namespace AutoUpdatingPlugin
 
 			toUpdateCount = toUpdate.Count;
 
-			Logger.Msg($"Found {toUpdateCount} outdated mods.");
+			if (toUpdateCount > 0)
+			{
+				Logger.Warning($"Found {toUpdateCount} outdated mods.");
+			}
 
 			for (int i = 0; i < toUpdateCount; ++i)
 			{
@@ -72,7 +75,7 @@ namespace AutoUpdatingPlugin
 				UpdateInstallation(installedMod, apiMod);
 
 				progressTotal = (int)((i + 1) / (double)toUpdateCount * 100);
-				Logger.Msg($"Progress: {i + 1}/{toUpdateCount} -> {progressTotal}%");
+				Logger.Minor($"Progress: {i + 1}/{toUpdateCount} -> {progressTotal}%");
 
 			}
 

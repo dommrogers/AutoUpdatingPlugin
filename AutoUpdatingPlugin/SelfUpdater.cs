@@ -12,28 +12,28 @@ namespace AutoUpdatingPlugin
 		/// <returns></returns>
 		internal static void CheckVersion()
 		{
-			Logger.Msg("Fetching updater version data...");
-			Logger.Msg("Attempting to get version information from the repository...");
+//			Logger.Msg("Fetching updater version data...");
+//			Logger.Msg("Attempting to get version information from the repository...");
 			string apiResponse = InternetAccess.GetVersionJsonText();
 
 			if (string.IsNullOrWhiteSpace(apiResponse))
 			{
-				Logger.Error("Failed to download the data.");
+				Logger.Error("Failed to download AUP version data.");
 				return;
 			}
 
-			Logger.Msg("Downloaded from the repository. Attempting to parse data...");
+//			Logger.Msg("Downloaded AUP version data");
 
 			ProxyObject? data = (ProxyObject)JSON.Load(apiResponse);
 
 			string version = data["Version"];
 			if ((VersionData)BuildInfo.Version >= (VersionData)version)
 			{
-				Logger.Msg($"The Auto Updating Plugin ({BuildInfo.Version}) is up-to-date.");
+				Logger.Success($"The Auto Updating Plugin ({BuildInfo.Version}) is up-to-date.");
 				return;
 			}
 
-			Logger.Msg($"The Auto Updating Plugin ({BuildInfo.Version}) is out-dated. Updating now to ({version})...");
+			Logger.Warning($"The Auto Updating Plugin ({BuildInfo.Version}) is out-dated. Updating now to ({version})...");
 			string downloadLink = data["Download"];
 			if (string.IsNullOrWhiteSpace(downloadLink))
 			{
@@ -50,7 +50,7 @@ namespace AutoUpdatingPlugin
 					{
 						return;//Failed to save the updated version, so don't end the program.
 					}
-					Logger.Msg("The Auto Updating Plugin has been successfully updated. The game must be relaunched for these changes to take effect.");
+					Logger.Success("The Auto Updating Plugin has been successfully updated. The game must be relaunched for these changes to take effect.");
 					EndProgram();
 				}
 			}
@@ -76,7 +76,7 @@ namespace AutoUpdatingPlugin
 
 		private static void EndProgram()
 		{
-			Logger.Msg("Ending Program in 10 seconds");
+			Logger.Warning("Ending Program in 10 seconds");
 			System.Diagnostics.Stopwatch? x = new System.Diagnostics.Stopwatch();
 			x.Start();
 			while (x.ElapsedMilliseconds < 10000) { }

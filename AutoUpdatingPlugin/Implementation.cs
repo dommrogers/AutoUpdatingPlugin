@@ -3,12 +3,14 @@
 [assembly: MelonPriority(-999)]
 namespace AutoUpdatingPlugin
 {
-    internal sealed class Implementation : MelonPlugin
+    public sealed class Implementation : MelonPlugin
     {
 
 		static int loopCount = 0;
+		internal static string GameDirectory { get; set; }
+		internal static bool UseMelonLoader { get; set; } = true;
 
-        public override void OnPreInitialization()
+		public override void OnPreInitialization()
         {
             try
             {
@@ -34,8 +36,20 @@ namespace AutoUpdatingPlugin
 
 		
 
-		public static void UpdateMods()
+		public static void UpdateMods(string? gameDir = null, bool ml = true)
 		{
+			GameDirectory = MelonUtils.GameDirectory;
+			if(!string.IsNullOrEmpty(gameDir))
+			{
+				GameDirectory = gameDir;
+			}
+			if(!ml)
+			{
+				UseMelonLoader = false;
+			}
+
+
+
 			// extract first so we have a full idea of what is installed
 			ZipFileHandler.ExtractZipFilesInDirectory(FileUtils.ModsFolder);
 
