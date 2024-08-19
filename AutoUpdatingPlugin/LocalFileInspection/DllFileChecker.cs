@@ -61,6 +61,8 @@ namespace AutoUpdatingPlugin
 							modName = newName;
 						}
 
+						modName = FileUtils.GetCleanName(modName);
+
 						if (InstalledModList.installedMods.TryGetValue(modName, out InstalledModDetail? installedModDetail))
 						{
 							if (installedModDetail.files[0].version > (VersionData)modVersion)

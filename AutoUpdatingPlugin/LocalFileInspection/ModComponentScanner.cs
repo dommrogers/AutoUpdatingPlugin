@@ -38,6 +38,7 @@ namespace AutoUpdatingPlugin
 						BuildInfoDetail buildInfo = InternalZipInspector.InspectZipFile(filename);
 
 						string modName;
+						string modFileName = Path.GetFileNameWithoutExtension(filename);
 						string version = buildInfo.Version;
 
 						if (string.IsNullOrWhiteSpace(buildInfo.Name))
@@ -57,8 +58,13 @@ namespace AutoUpdatingPlugin
 							modName = newName;
 						}
 
+						modName = FileUtils.GetCleanName(modName);
+						modFileName = FileUtils.GetCleanName(modFileName);
+
+
 						if (InstalledModList.installedMods.TryGetValue(modName, out InstalledModDetail installedModDetail))
 						{
+							Logger.Msg($"Tracking Installed Mod File {modName}");
 							installedModDetail.files.Add(new InstalledFileDetail(modName, version, filename, InstalledFileType.ModComponent));
 							if (isAliasName)
 							{
@@ -67,6 +73,7 @@ namespace AutoUpdatingPlugin
 						}
 						else
 						{
+							Logger.Msg($"Tracking MC File {modFileName}=>{modName}");
 							InstalledModDetail newModDetail = new InstalledModDetail(modName);
 							newModDetail.files.Add(new InstalledFileDetail(modName, version, filename, InstalledFileType.ModComponent));
 							if (isAliasName)
@@ -75,6 +82,18 @@ namespace AutoUpdatingPlugin
 							}
 
 							InstalledModList.installedMods.Add(modName, newModDetail);
+							Logger.Msg($"Adding InstalledMods {modName}");
+
+							// also track the modcomponent filename
+							if (modName != modFileName) {
+								Logger.Msg($"Adding InstalledMods {modFileName}");
+								InstalledModDetail newModDetailMC = new InstalledModDetail(modFileName);
+								newModDetailMC.files.Add(new InstalledFileDetail(modFileName, version, filename, InstalledFileType.ModComponent));
+								InstalledModList.installedMods.TryAdd(modFileName, newModDetailMC);
+								
+							}
+
+
 						}
 					}
 					catch (Exception e)

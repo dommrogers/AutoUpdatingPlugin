@@ -24,7 +24,7 @@ namespace AutoUpdatingPlugin
 
 		internal static void ScanModFolder()
 		{
-//			Logger.Msg("Scanning for installed mods...");
+			//			Logger.Msg("Scanning for installed mods...");
 			installedMods.Clear();
 
 			//has to run first

@@ -6,14 +6,15 @@ namespace AutoUpdatingPlugin
 {
 	internal class APIMod
 	{
-		public string name;
-		public VersionData version;
-		public string type;
-		public bool enableUpdate;
-		public string[] downloadlinks;
-		public string[] aliases;
-		public string[] dependencies;
-		public bool canCheckDependencies = true;
+		public string name { get; set; }
+		public string Author { get; set; }
+		public VersionData version { get; set; }
+		public string type { get; set; }
+		public bool enableUpdate { get; set; }
+		public string[] downloadlinks { get; set; }
+		public string[] aliases { get; set; }
+		public string[] dependencies { get; set; }
+		public bool canCheckDependencies { get; set; } = true;
 
 		public override string ToString() => name;
 

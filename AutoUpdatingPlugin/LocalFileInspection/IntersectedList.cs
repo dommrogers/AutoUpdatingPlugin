@@ -19,23 +19,36 @@ namespace AutoUpdatingPlugin
 			foreach (KeyValuePair<string, InstalledModDetail> installedMod in InstalledModList.installedMods)
 			{
 				bool foundApiEntry = false;
-				foreach (KeyValuePair<string, APIMod> remoteMod in APIList.supportedMods)
+				foreach (KeyValuePair<string, APIMod> remoteMod in APIList.validMods)
 				{
-					if (installedMod.Key.ToLower() == remoteMod.Key.ToLower())
+					if (installedMod.Key.ToLowerInvariant() == remoteMod.Key.ToLowerInvariant())
 					{
 						foundApiEntry = true;
-						stringApiMods.TryAdd(remoteMod.Key.ToLower(), remoteMod.Value);
-						stringInstalledMods.TryAdd(installedMod.Key.ToLower(), installedMod.Value);
+						stringApiMods.TryAdd(remoteMod.Key.ToLowerInvariant(), remoteMod.Value);
+						stringInstalledMods.TryAdd(installedMod.Key.ToLowerInvariant(), installedMod.Value);
 						installedApiMods.TryAdd(installedMod.Value, remoteMod.Value);
+//						Logger.Msg($"Match: {installedMod.Key.ToLowerInvariant()} => {remoteMod.Key.ToLowerInvariant()}");
 						break;
+					}
+					foreach (string alias in remoteMod.Value.aliases)
+					{
+						if (installedMod.Key.ToLowerInvariant() == alias.ToLowerInvariant())
+						{
+							foundApiEntry = true;
+							stringApiMods.TryAdd(remoteMod.Key.ToLowerInvariant(), remoteMod.Value);
+							stringInstalledMods.TryAdd(installedMod.Key.ToLowerInvariant(), installedMod.Value);
+							installedApiMods.TryAdd(installedMod.Value, remoteMod.Value);
+//							Logger.Msg($"Match Alias: {installedMod.Key.ToLowerInvariant()} => {alias.ToLowerInvariant()}");
+							break;
+						}
 					}
 				}
 				if (!foundApiEntry)
 				{
-					Logger.Warning($"There is no associated API entry for '{installedMod.Key.ToLower()}'");
+					Logger.Warning($"There is no associated API entry for '{installedMod.Key.ToLowerInvariant()}'");
 				}
 			}
-			Logger.Minor($"Found {stringApiMods.Count} supported mods installed.");
+			Logger.Minor($"Found {stringApiMods.Count} valid mods installed.");
 		}
 	}
 }

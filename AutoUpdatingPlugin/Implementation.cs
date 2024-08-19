@@ -10,11 +10,25 @@ namespace AutoUpdatingPlugin
 		internal static string GameDirectory { get; set; }
 		internal static bool UseMelonLoader { get; set; } = true;
 
+		internal static bool doUpdate = false;
+		public void OnApplicationDefiniteQuit()
+		{
+//			Logger.Msg("OnApplicationDefiniteQuit");
+		}
+
+		public override void OnApplicationQuit()
+		{
+//			Logger.Msg("OnApplicationQuit");
+			
+		}
+
 		public override void OnPreInitialization()
         {
-            try
-            {
-                SelfUpdater.CheckVersion();
+			GameDirectory = MelonUtils.GameDirectory;
+
+			try
+			{
+//                SelfUpdater.CheckForUpdate();
 
                 AssetRipper.VersionUtilities.UnityVersion unityVersion = MelonLoader.InternalUtils.UnityInformationHandler.EngineVersion;
                 if (unityVersion < AssetRipper.VersionUtilities.UnityVersion.Parse("2019.4.19"))
@@ -38,7 +52,6 @@ namespace AutoUpdatingPlugin
 
 		public static void UpdateMods(string? gameDir = null, bool ml = true)
 		{
-			GameDirectory = MelonUtils.GameDirectory;
 			if(!string.IsNullOrEmpty(gameDir))
 			{
 				GameDirectory = gameDir;
@@ -48,6 +61,8 @@ namespace AutoUpdatingPlugin
 				UseMelonLoader = false;
 			}
 
+
+			SourceScanner.Scan();
 
 
 			// extract first so we have a full idea of what is installed
@@ -67,6 +82,7 @@ namespace AutoUpdatingPlugin
 				Logger.Error("Max loops of 5 hit, stopping...");
 				return;
 			}
+
 
 			InstalledModList.ScanModFolder();
 

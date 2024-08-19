@@ -33,5 +33,11 @@ namespace AutoUpdatingPlugin
 		{
 			return Path.Combine(FileUtils.PluginsFolder, BuildInfo.Name + ".dll");
 		}
+
+		internal static string GetCleanName(string name)
+		{
+			return name.Replace("'", null).Replace(" ", null).Replace("-", null).Replace("_", null).Replace(".", null);
+		}
+
 	}
 }

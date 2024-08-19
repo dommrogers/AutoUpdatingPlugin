@@ -1,6 +1,10 @@
-﻿using MelonLoader.TinyJSON;
+﻿using Il2CppSystem.Linq;
+using MelonLoader.TinyJSON;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
 
 namespace AutoUpdatingPlugin
 {
@@ -18,29 +22,45 @@ namespace AutoUpdatingPlugin
 
 			ProxyObject mods = (ProxyObject)JSON.Load(text);
 
-			List<string> inApi = new List<string>();
-
 			foreach (KeyValuePair<string, Variant> mod in mods)
 			{
 				ProxyObject modData = (ProxyObject)mod.Value;
 				APIMod apiMod = new APIMod();
-				apiMod.name = modData["Name"];
-				//				Logger.Msg(apiMod.name);
-				inApi.Add(apiMod.name);
+				apiMod.name = FileUtils.GetCleanName(modData["Name"]);
+				apiMod.Author = modData["Author"];
 				apiMod.version = (VersionData)(string)modData["Version"];
 				apiMod.type = (modData["Type"] == null) ? "" : modData["Type"];
 				apiMod.aliases = MakeStringArray(modData["Aliases"] as ProxyArray);
 				apiMod.dependencies = MakeStringArray(modData["Dependencies"] as ProxyArray);
 				apiMod.enableUpdate = modData["Updater"]["enable_update"];
 				apiMod.downloadlinks = MakeDownloadArray(modData["Updater"]["downloads"] as ProxyArray);
+
+				List<string> tempAliases = apiMod.aliases.ToList();
+				foreach (string downloadlink in apiMod.downloadlinks)
+				{
+					if(downloadlink.EndsWith(".zip"))
+					{
+						continue;
+					}
+					string filename = Path.GetFileNameWithoutExtension(downloadlink);
+					filename = FileUtils.GetCleanName(filename);
+					if (filename.ToLowerInvariant() != apiMod.name.ToLowerInvariant())
+					{
+						if (!tempAliases.Contains(filename))
+						{
+							tempAliases.Add(filename);
+						}
+					}
+				}
+
+				apiMod.aliases = tempAliases.Select(x=>FileUtils.GetCleanName(x)).ToArray();
+
 				result.Add(apiMod);
 			}
 
-			if (inApi.Count > 0)
-			{
-				//Logger.Msg("Mods Found in API Response:");
-				//Logger.Msg("# " + string.Join(", ",inApi));
-			}
+			result = result.OrderBy(x => x.name).ToList();
+
+			File.WriteAllText("apiMods.json", JsonSerializer.Serialize(result, new JsonSerializerOptions() { WriteIndented = true }));
 
 			return result.ToArray();
 		}
@@ -55,7 +75,7 @@ namespace AutoUpdatingPlugin
 			string[] result = new string[proxy.Count];
 			for (int i = 0; i < proxy.Count; i++)
 			{
-				result[i] = proxy[i];
+				result[i] = FileUtils.GetCleanName(proxy[i]);
 			}
 			return result;
 		}

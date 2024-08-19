@@ -9,6 +9,15 @@ namespace AutoUpdatingPlugin
 {
 	internal static class DependencyHandler
 	{
+
+
+
+		private static GlobalDependencyData GlobalDependencyData()
+		{
+			string? data = InternetAccess.GetGlobalDependencyData();
+			return new GlobalDependencyData(data);
+		}
+
 		private static void ValidateDependencies()
 		{
 			string[] modNames = APIList.GetModNames();
@@ -21,6 +30,7 @@ namespace AutoUpdatingPlugin
 		{
 			string[] installedMods = InstalledModList.GetInstalledModNames();
 			List<string> missingNames = new List<string>();
+			List<string> missingNamesForce = new List<string>();
 			foreach (KeyValuePair<InstalledModDetail, APIMod> remoteMod in IntersectedList.installedApiMods)
 			{
 				if (!remoteMod.Value.canCheckDependencies)
@@ -30,17 +40,48 @@ namespace AutoUpdatingPlugin
 
 				foreach (string dependency in remoteMod.Value.dependencies)
 				{
-					if (!installedMods.Contains(dependency) && !missingNames.Contains(dependency))
+					string _dependency = FileUtils.GetCleanName(dependency);
+					if (!installedMods.Contains(_dependency) && !missingNames.Contains(_dependency))
 					{
-						missingNames.Add(dependency);
+						missingNames.Add(_dependency);
 					}
 				}
 			}
 
+			// new global dependency checker
+			//			Logger.Msg($"Checking GlobalDependencyData");
+			GlobalDependencyData? gdd = GlobalDependencyData();
+			if (gdd.Entries.Count > 0)
+			{
+				//				Logger.Msg($"GlobalDependencyData {gdd.Entries.Count}");
+				foreach (GDEntry entry in gdd.Entries)
+				{
+					if (installedMods.Contains(FileUtils.GetCleanName(entry.Mod)))
+					{
+						//						Logger.Msg($"GlobalDependencyData {entry.Mod} {entry.Requires.Length}");
+						foreach (string dependency in entry.Requires)
+						{
+							string _dependency = FileUtils.GetCleanName(dependency);
+							if (!installedMods.Contains(_dependency) && !missingNamesForce.Contains(_dependency))
+							{
+								missingNames.Add(_dependency);
+								//								Logger.Msg($"GlobalDependencyData {entry.Mod} Missing {dependency}");
+							}
+						}
+					}
+				}
+			}
+
+
 			List<APIMod> result = new List<APIMod>(missingNames.Count);
 			foreach (string name in missingNames)
 			{
-				result.Add(APIList.supportedMods[name]);
+				string _name = FileUtils.GetCleanName(name);
+
+				if (APIList.validMods.ContainsKey(_name))
+				{
+					result.Add(APIList.validMods[_name]);
+				}
 			}
 
 			return result.ToArray();
@@ -48,7 +89,7 @@ namespace AutoUpdatingPlugin
 
 		public static int InstallAllMissingDependencies()
 		{
-//			Logger.Msg("Checking for missing dependencies...");
+			//			Logger.Msg("Checking for missing dependencies...");
 
 			ValidateDependencies();
 
@@ -113,7 +154,8 @@ namespace AutoUpdatingPlugin
 						{
 							downloadedData.Add((FileUtils.GetDestinationPlugin(link), buffer));
 						}
-						else {
+						else
+						{
 							downloadedData.Add((FileUtils.GetDestination(link), buffer));
 						}
 					}

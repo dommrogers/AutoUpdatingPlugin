@@ -9,45 +9,49 @@ namespace AutoUpdatingPlugin
 		internal static BuildInfoDetail InspectZipFile(string zipFilePath)
 		{
 			//Logger.Msg("Reading zip file at: '{0}'", zipFilePath);
-			FileStream fileStream = File.OpenRead(zipFilePath);
-			ZipInputStream zipInputStream = new ZipInputStream(fileStream);
-			ZipEntry entry;
-			while ((entry = zipInputStream.GetNextEntry()) != null)
+			using (FileStream fileStream = File.OpenRead(zipFilePath))
 			{
-				string internalPath = entry.Name;
-				if (internalPath.ToLowerInvariant() == "buildinfo.json")
+				using (ZipInputStream zipInputStream = new ZipInputStream(fileStream))
 				{
-					using MemoryStream unzippedFileStream = new MemoryStream();
-					int size = 0;
-					byte[] buffer = new byte[4096];
-					while (true)
+					ZipEntry entry;
+					while ((entry = zipInputStream.GetNextEntry()) != null)
 					{
-						size = zipInputStream.Read(buffer, 0, buffer.Length);
-						if (size > 0)
+						string internalPath = entry.Name;
+						if (internalPath.ToLowerInvariant() == "buildinfo.json")
 						{
-							unzippedFileStream.Write(buffer, 0, size);
+							using MemoryStream unzippedFileStream = new MemoryStream();
+							int size = 0;
+							byte[] buffer = new byte[4096];
+							while (true)
+							{
+								size = zipInputStream.Read(buffer, 0, buffer.Length);
+								if (size > 0)
+								{
+									unzippedFileStream.Write(buffer, 0, size);
+								}
+								else
+								{
+									break;
+								}
+							}
+							//Logger.Msg(unzippedFileStream.ToArray().Length.ToString());
+							string text = ReadToString2(unzippedFileStream);
+							if (text is null)
+							{
+								Logger.Error("text in InternalZipInspector was null");
+							}
+							else
+							{
+								//Logger.Msg("Found BuildInfo.json\n" + text);
+								return JsonAnalyzer.GetBuildInfoFromJson(text, Path.Combine(zipFilePath, internalPath));
+							}
 						}
-						else
-						{
-							break;
-						}
 					}
-					//Logger.Msg(unzippedFileStream.ToArray().Length.ToString());
-					string text = ReadToString2(unzippedFileStream);
-					if (text is null)
-					{
-						Logger.Error("text in InternalZipInspector was null");
-					}
-					else
-					{
-						//Logger.Msg("Found BuildInfo.json\n" + text);
-						return JsonAnalyzer.GetBuildInfoFromJson(text, Path.Combine(zipFilePath, internalPath));
-					}
+
+					Logger.Msg($"Cannot identify version because there is no BuildInfo.json in {zipFilePath}");
+					return new BuildInfoDetail();
 				}
 			}
-
-			Logger.Msg($"Cannot identify version because there is no BuildInfo.json in {zipFilePath}");
-			return new BuildInfoDetail();
 		}
 		internal static Encoding GetEncoding(MemoryStream memoryStream)
 		{

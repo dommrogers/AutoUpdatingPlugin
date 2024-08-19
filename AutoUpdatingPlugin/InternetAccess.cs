@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Threading;
 
@@ -8,6 +9,7 @@ namespace AutoUpdatingPlugin
 	{
 		internal const string DownloadURL = @"https://github.com/dommrogers/AutoUpdatingPlugin/releases/latest/download/AutoUpdatingPlugin.dll";
 		private const string VersionURL = @"https://raw.githubusercontent.com/dommrogers/AutoUpdatingPlugin/master/Version.json";
+		private const string DepsUrl = @"https://raw.githubusercontent.com/TLD-Mods/ModLists/master/dependency_files/aup.json";
 
 		internal static string GetVersionJsonText()
 		{
@@ -16,6 +18,18 @@ namespace AutoUpdatingPlugin
 			{
 				client.Headers["User-Agent"] = "AutoUpdatingPlugin";
 				apiResponse = client.DownloadString(VersionURL);
+			}
+			return apiResponse;
+		}
+
+		internal static string GetGlobalDependencyData()
+		{
+
+			string apiResponse = "";
+			using (WebClient? client = new WebClient())
+			{
+				client.Headers["User-Agent"] = "AutoUpdatingPlugin";
+				apiResponse = client.DownloadString(DepsUrl);
 			}
 			return apiResponse;
 		}
