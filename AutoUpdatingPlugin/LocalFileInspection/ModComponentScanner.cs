@@ -37,24 +37,16 @@ namespace AutoUpdatingPlugin
 					{
 						BuildInfoDetail buildInfo = InternalZipInspector.InspectZipFile(filename);
 
-						string modName;
-						string modFileName = Path.GetFileNameWithoutExtension(filename);
-						string version = buildInfo.Version;
 
-						if (string.IsNullOrWhiteSpace(buildInfo.Name))
-						{
-							modName = Path.GetFileNameWithoutExtension(filename);
-						}
-						else
-						{
-							modName = buildInfo.Name;
-						}
+						string modFileName = Path.GetFileNameWithoutExtension(filename);
+						string modName = (string.IsNullOrWhiteSpace(buildInfo.Name)) ? modFileName : buildInfo.Name ;
+						string version = buildInfo.Version;
 
 						bool isAliasName = APIList.IsAliasName(modName);
 						if (isAliasName)
 						{
 							string newName = APIList.GetNewModName(modName);
-							Logger.Msg($"'{modName}' is obsolete. It will be replaced with '{newName}'.");
+							Logger.Msg($"MC '{modName}' is obsolete. It will be replaced with '{newName}'.");
 							modName = newName;
 						}
 
@@ -64,7 +56,7 @@ namespace AutoUpdatingPlugin
 
 						if (InstalledModList.installedMods.TryGetValue(modName, out InstalledModDetail installedModDetail))
 						{
-							Logger.Msg($"Tracking Installed Mod File {modName}");
+							Logger.Msg($"MC Tracking Installed Mod File {modName}|{modFileName}");
 							installedModDetail.files.Add(new InstalledFileDetail(modName, version, filename, InstalledFileType.ModComponent));
 							if (isAliasName)
 							{
@@ -82,11 +74,15 @@ namespace AutoUpdatingPlugin
 							}
 
 							InstalledModList.installedMods.Add(modName, newModDetail);
+#if DEBUG
 							Logger.Msg($"Adding InstalledMods {modName}");
+#endif
 
 							// also track the modcomponent filename
 							if (modName != modFileName) {
-								Logger.Msg($"Adding InstalledMods {modFileName}");
+#if DEBUG
+Logger.Msg($"Adding InstalledMods {modFileName}");
+#endif
 								InstalledModDetail newModDetailMC = new InstalledModDetail(modFileName);
 								newModDetailMC.files.Add(new InstalledFileDetail(modFileName, version, filename, InstalledFileType.ModComponent));
 								InstalledModList.installedMods.TryAdd(modFileName, newModDetailMC);

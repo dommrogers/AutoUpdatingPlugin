@@ -29,18 +29,30 @@ namespace AutoUpdatingPlugin
 		private static APIMod[] GetMissingDependencies()
 		{
 			string[] installedMods = InstalledModList.GetInstalledModNames();
+#if DEBUG
+			Logger.Msg($"Checking Deps for {installedMods.Length} mods");
+#endif
 			List<string> missingNames = new List<string>();
 			List<string> missingNamesForce = new List<string>();
 			foreach (KeyValuePair<InstalledModDetail, APIMod> remoteMod in IntersectedList.installedApiMods)
 			{
+#if DEBUG				
+				Logger.Msg($"Checking {remoteMod.Key.name} {remoteMod.Value.dependencies.Length}");
+#endif
 				if (!remoteMod.Value.canCheckDependencies)
 				{
+#if DEBUG
+					Logger.Msg($"canCheckDependencies {remoteMod.Key.name}");
+#endif
 					continue;
 				}
 
 				foreach (string dependency in remoteMod.Value.dependencies)
 				{
 					string _dependency = FileUtils.GetCleanName(dependency);
+#if DEBUG
+					Logger.Msg($"GetMissingDependencies {remoteMod.Key.name} {dependency}|{_dependency}");
+#endif
 					if (!installedMods.Contains(_dependency) && !missingNames.Contains(_dependency))
 					{
 						missingNames.Add(_dependency);
@@ -89,7 +101,7 @@ namespace AutoUpdatingPlugin
 
 		public static int InstallAllMissingDependencies()
 		{
-			//			Logger.Msg("Checking for missing dependencies...");
+			Logger.Msg("Checking for missing dependencies...");
 
 			ValidateDependencies();
 

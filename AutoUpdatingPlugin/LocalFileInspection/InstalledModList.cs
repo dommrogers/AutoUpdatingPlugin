@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.IO;
 
 namespace AutoUpdatingPlugin
 {
@@ -27,11 +29,17 @@ namespace AutoUpdatingPlugin
 			//			Logger.Msg("Scanning for installed mods...");
 			installedMods.Clear();
 
+			ModComponentScanner.ScanForModComponentFiles();
+
 			//has to run first
 			DllFileChecker.ScanForDllFiles(FileUtils.ModsFolder);
 			DllFileChecker.ScanForDllFiles(FileUtils.PluginsFolder);
 
-			ModComponentScanner.ScanForModComponentFiles();
+#if DEBUG
+			File.WriteAllText("installedMods.json", JsonSerializer.Serialize(installedMods, new JsonSerializerOptions() { WriteIndented = true }));
+			Logger.Minor("Write installedMods.json");
+#endif
+
 
 			Logger.Minor("Found " + installedMods.Count + " unique non-dev mods installed");
 		}

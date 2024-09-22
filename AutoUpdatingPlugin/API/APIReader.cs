@@ -60,7 +60,9 @@ namespace AutoUpdatingPlugin
 
 			result = result.OrderBy(x => x.name).ToList();
 
+#if DEBUG
 			File.WriteAllText("apiMods.json", JsonSerializer.Serialize(result, new JsonSerializerOptions() { WriteIndented = true }));
+#endif
 
 			return result.ToArray();
 		}
