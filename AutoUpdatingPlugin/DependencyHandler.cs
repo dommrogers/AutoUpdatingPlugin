@@ -37,21 +37,21 @@ namespace AutoUpdatingPlugin
 			foreach (KeyValuePair<InstalledModDetail, APIMod> remoteMod in IntersectedList.installedApiMods)
 			{
 #if DEBUG				
-				Logger.Msg($"Checking {remoteMod.Key.name} {remoteMod.Value.dependencies.Length}");
+				Logger.Msg($"Checking {remoteMod.Key.CleanName} {remoteMod.Value.Dependencies.Length}");
 #endif
 				if (!remoteMod.Value.canCheckDependencies)
 				{
 #if DEBUG
-					Logger.Msg($"canCheckDependencies {remoteMod.Key.name}");
+					Logger.Msg($"canCheckDependencies {remoteMod.Key.CleanName}");
 #endif
 					continue;
 				}
 
-				foreach (string dependency in remoteMod.Value.dependencies)
+				foreach (string dependency in remoteMod.Value.Dependencies)
 				{
 					string _dependency = FileUtils.GetCleanName(dependency);
 #if DEBUG
-					Logger.Msg($"GetMissingDependencies {remoteMod.Key.name} {dependency}|{_dependency}");
+					Logger.Msg($"GetMissingDependencies {remoteMod.Key.CleanName} {dependency}|{_dependency}");
 #endif
 					if (!installedMods.Contains(_dependency) && !missingNames.Contains(_dependency))
 					{
@@ -61,23 +61,22 @@ namespace AutoUpdatingPlugin
 			}
 
 			// new global dependency checker
-			//			Logger.Msg($"Checking GlobalDependencyData");
 			GlobalDependencyData? gdd = GlobalDependencyData();
 			if (gdd.Entries.Count > 0)
 			{
-				//				Logger.Msg($"GlobalDependencyData {gdd.Entries.Count}");
+//				Logger.Msg($"GlobalDependencyData {gdd.Entries.Count}");
 				foreach (GDEntry entry in gdd.Entries)
 				{
 					if (installedMods.Contains(FileUtils.GetCleanName(entry.Mod)))
 					{
-						//						Logger.Msg($"GlobalDependencyData {entry.Mod} {entry.Requires.Length}");
+//						Logger.Msg($"GlobalDependencyData {entry.Mod} {entry.Requires.Length}");
 						foreach (string dependency in entry.Requires)
 						{
 							string _dependency = FileUtils.GetCleanName(dependency);
 							if (!installedMods.Contains(_dependency) && !missingNamesForce.Contains(_dependency))
 							{
 								missingNames.Add(_dependency);
-								//								Logger.Msg($"GlobalDependencyData {entry.Mod} Missing {dependency}");
+								Logger.Msg($"GlobalDependencyData {entry.Mod} Missing {dependency}");
 							}
 						}
 					}
@@ -89,6 +88,7 @@ namespace AutoUpdatingPlugin
 			foreach (string name in missingNames)
 			{
 				string _name = FileUtils.GetCleanName(name);
+				Logger.Msg($"APIMod List Add {_name} Missing");
 
 				if (APIList.validMods.ContainsKey(_name))
 				{
@@ -117,13 +117,14 @@ namespace AutoUpdatingPlugin
 			{
 				APIMod apiMod = toInstall[i];
 
-				Logger.Msg($"Installing {apiMod.name} ({i + 1} / {toUpdateCount})...");
+				Logger.Msg($"Installing {apiMod.CleanName} ({i + 1} / {toUpdateCount})...");
 
 				InstallMissingDependency(apiMod);
 
 				int progressTotal = (int)((i + 1) / (double)toUpdateCount * 100);
 				Logger.Minor($"Progress: {i + 1}/{toUpdateCount} -> {progressTotal}%");
 			}
+
 
 			return toUpdateCount;
 		}
@@ -142,7 +143,7 @@ namespace AutoUpdatingPlugin
 					{
 						if (e.Error != null)
 						{
-							Logger.Error("Failed to download " + apiMod.name + ":\n" + e.Error);
+							Logger.Error("Failed to download " + apiMod.CleanName + ":\n" + e.Error);
 							errored = true;
 						}
 						else
@@ -152,7 +153,7 @@ namespace AutoUpdatingPlugin
 
 						downloading = false;
 					};
-					foreach (string? link in apiMod.downloadlinks)
+					foreach (string? link in apiMod.Downloads)
 					{
 						downloading = true;
 						buffer = null;
@@ -162,7 +163,7 @@ namespace AutoUpdatingPlugin
 						{
 							Thread.Sleep(50);
 						}
-						if (apiMod.type.ToLower() == "plugin")
+						if (apiMod.Type.ToLower() == "plugin")
 						{
 							downloadedData.Add((FileUtils.GetDestinationPlugin(link), buffer));
 						}
@@ -184,7 +185,7 @@ namespace AutoUpdatingPlugin
 						}
 						catch (Exception e)
 						{
-							Logger.Error("Failed to save while installing files for " + apiMod.name + ":\n" + e);
+							Logger.Error("Failed to save while installing files for " + apiMod.CleanName + ":\n" + e);
 							return;
 						}
 					}
@@ -193,7 +194,7 @@ namespace AutoUpdatingPlugin
 			}
 			catch (Exception e)
 			{
-				Logger.Error("Failed to install " + apiMod.name + ":\n" + e);
+				Logger.Error("Failed to install " + apiMod.CleanName + ":\n" + e);
 			}
 
 		}

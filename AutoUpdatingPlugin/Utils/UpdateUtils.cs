@@ -8,7 +8,7 @@ namespace AutoUpdatingPlugin
 		{
 			if (IsCorrectApi(installedMod, apiMod))
 			{
-				return installedMod.GetMinValidVersion() < apiMod.version;
+				return installedMod.GetMinValidVersion() < apiMod.VersionData;
 			}
 			else
 			{
@@ -25,7 +25,7 @@ namespace AutoUpdatingPlugin
 				return false;
 			}
 
-			if (installedMod.name == apiMod.name || apiMod.aliases.Contains(installedMod.name))
+			if (installedMod.CleanName == apiMod.CleanName || apiMod.Aliases.Contains(installedMod.CleanName))
 			{
 				return true;
 			}

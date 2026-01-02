@@ -4,7 +4,8 @@
 	{
 		Unknown,
 		DownloadError,
-		SaveError
+		SaveError,
+		Disabled
 	}
 
 	internal class FailedUpdateInfo

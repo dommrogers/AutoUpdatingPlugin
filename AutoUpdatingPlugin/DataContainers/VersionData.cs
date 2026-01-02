@@ -21,23 +21,11 @@ namespace AutoUpdatingPlugin
 			numbers = new List<int>(0);
 		}
 
-		public VersionData(MatchCollection collection)
-		{
-			IsValidSemver = true;
-			numbers = new List<int>(collection.Count);
-
-			foreach (Match match in collection)
-			{
-				int parsedNumber = int.Parse(match.Value);
-				numbers.Add(parsedNumber > 0 ? parsedNumber : 0);
-			}
-		}
-
-		public static explicit operator VersionData(string versionString)
+		public VersionData(string versionString)
 		{
 			if (string.IsNullOrWhiteSpace(versionString))
 			{
-				return VersionData.ZERO;
+				return;
 			}
 
 			versionString = versionString.Trim();
@@ -45,12 +33,18 @@ namespace AutoUpdatingPlugin
 			if (IsValidVersionString(versionString))
 			{
 				MatchCollection matches = Regex.Matches(versionString, "\\d+");
-				return new VersionData(matches);
+				IsValidSemver = true;
+				numbers = new List<int>(matches.Count);
+
+				foreach (Match match in matches)
+				{
+					int parsedNumber = int.Parse(match.Value);
+					numbers.Add(parsedNumber > 0 ? parsedNumber : 0);
+				}
 			}
-			else
-			{
-				return VersionData.ZERO;
-			}
+
+			return;
+
 		}
 
 		public static bool IsValidVersionString(string versionString) => Regex.IsMatch(versionString, "^v?[0-9][\\d.-_]*[^\\s]*$");

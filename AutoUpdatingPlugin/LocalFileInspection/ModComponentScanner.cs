@@ -35,60 +35,57 @@ namespace AutoUpdatingPlugin
 
 					try
 					{
-						BuildInfoDetail buildInfo = InternalZipInspector.InspectZipFile(filename);
+						MCBuildInfo buildInfo = InternalZipInspector.InspectZipFile(filename);
 
 
 						string modFileName = Path.GetFileNameWithoutExtension(filename);
 						string modName = (string.IsNullOrWhiteSpace(buildInfo.Name)) ? modFileName : buildInfo.Name ;
+						string originalModName = FileUtils.GetCleanName(modName);
 						string version = buildInfo.Version;
-
-						bool isAliasName = APIList.IsAliasName(modName);
-						if (isAliasName)
-						{
-							string newName = APIList.GetNewModName(modName);
-							Logger.Msg($"MC '{modName}' is obsolete. It will be replaced with '{newName}'.");
-							modName = newName;
-						}
 
 						modName = FileUtils.GetCleanName(modName);
 						modFileName = FileUtils.GetCleanName(modFileName);
 
+//						Logger.Msg($"MC CHeck '{originalModName}' `{version}`.");
+
+						bool isReplaced = APIList.IsReplaced(modName);
+						if (isReplaced)
+						{
+							string replacementName = APIList.GetReplacementName(modName);
+							Logger.Msg($"MC '{originalModName}' is obsolete. It will be replaced with '{replacementName}'.");
+							modName = replacementName;
+						}
+
+						if (APIList.IsAlias(originalModName))
+						{
+							modName = APIList.GetNameFromAlias(originalModName);
+//							Logger.Msg($"MC '{originalModName}' is an alias for '{modName}'.");
+						}
+
+
+
 
 						if (InstalledModList.installedMods.TryGetValue(modName, out InstalledModDetail installedModDetail))
 						{
-							Logger.Msg($"MC Tracking Installed Mod File {modName}|{modFileName}");
-							installedModDetail.files.Add(new InstalledFileDetail(modName, version, filename, InstalledFileType.ModComponent));
-							if (isAliasName)
+//							Logger.Msg($"MC Tracking Installed Mod File {modName}|{modFileName}");
+							installedModDetail.Files.Add(new InstalledFileDetail(modName, version, filename, InstalledFileType.ModComponent));
+							if (isReplaced)
 							{
 								installedModDetail.TriggerOutdated();
 							}
 						}
 						else
 						{
-							Logger.Msg($"Tracking MC File {modFileName}=>{modName}");
+//							Logger.Msg($"Tracking MC File {modFileName}=>{modName}");
 							InstalledModDetail newModDetail = new InstalledModDetail(modName);
-							newModDetail.files.Add(new InstalledFileDetail(modName, version, filename, InstalledFileType.ModComponent));
-							if (isAliasName)
+							newModDetail.Files.Add(new InstalledFileDetail(modName, version, filename, InstalledFileType.ModComponent));
+							if (isReplaced)
 							{
 								newModDetail.TriggerOutdated();
 							}
 
 							InstalledModList.installedMods.Add(modName, newModDetail);
-#if DEBUG
-							Logger.Msg($"Adding InstalledMods {modName}");
-#endif
-
-							// also track the modcomponent filename
-							if (modName != modFileName) {
-#if DEBUG
-Logger.Msg($"Adding InstalledMods {modFileName}");
-#endif
-								InstalledModDetail newModDetailMC = new InstalledModDetail(modFileName);
-								newModDetailMC.files.Add(new InstalledFileDetail(modFileName, version, filename, InstalledFileType.ModComponent));
-								InstalledModList.installedMods.TryAdd(modFileName, newModDetailMC);
-								
-							}
-
+							Logger.Debug($"Adding InstalledMods {modName}");
 
 						}
 					}

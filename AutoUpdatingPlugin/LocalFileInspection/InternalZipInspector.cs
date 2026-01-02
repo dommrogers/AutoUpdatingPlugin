@@ -1,77 +1,69 @@
-﻿using MelonLoader.ICSharpCode.SharpZipLib.Zip;
-using System.IO;
-using System.Text;
+﻿using System.IO;
+using System.IO.Compression;
+using Newtonsoft.Json;
 
 namespace AutoUpdatingPlugin
 {
+	public class MCBuildInfo
+	{
+		public string? Name { get; set; } = null;
+		public string? Version { get; set; } = null;
+		public string? Author { get; set; } = null;
+	}
+
 	internal static class InternalZipInspector
 	{
-		internal static BuildInfoDetail InspectZipFile(string zipFilePath)
+		
+		internal static MCBuildInfo InspectZipFile(string zipFilePath)
 		{
 			//Logger.Msg("Reading zip file at: '{0}'", zipFilePath);
-			using (FileStream fileStream = File.OpenRead(zipFilePath))
+
+			using (ZipArchive archive = ZipFile.Open(zipFilePath, ZipArchiveMode.Read))
 			{
-				using (ZipInputStream zipInputStream = new ZipInputStream(fileStream))
+				if (archive.Entries.Count == 0)
 				{
-					ZipEntry entry;
-					while ((entry = zipInputStream.GetNextEntry()) != null)
+					Logger.Warning($"No entries fround in {zipFilePath}");
+				}
+
+				bool foundBuildInfo = false;
+
+				foreach (ZipArchiveEntry entry in archive.Entries)
+				{
+					string internalPath = entry.Name;
+					string internalPathCLean = internalPath.ToLowerInvariant();
+					if (internalPathCLean == "buildinfo.json")
 					{
-						string internalPath = entry.Name;
-						if (internalPath.ToLowerInvariant() == "buildinfo.json")
+						foundBuildInfo = true;
+						Logger.Debug($"Found buildinfo.json {zipFilePath} {internalPathCLean}");
+
+						using (var reader = new StreamReader(entry.Open()))
 						{
-							using MemoryStream unzippedFileStream = new MemoryStream();
-							int size = 0;
-							byte[] buffer = new byte[4096];
-							while (true)
+							string buildInfo = reader.ReadToEnd();
+							if (string.IsNullOrEmpty(buildInfo))
 							{
-								size = zipInputStream.Read(buffer, 0, buffer.Length);
-								if (size > 0)
-								{
-									unzippedFileStream.Write(buffer, 0, size);
-								}
-								else
-								{
-									break;
-								}
-							}
-							//Logger.Msg(unzippedFileStream.ToArray().Length.ToString());
-							string text = ReadToString2(unzippedFileStream);
-							if (text is null)
-							{
-								Logger.Error("text in InternalZipInspector was null");
+								Logger.Warning($"Empty buildinfo.json in {zipFilePath}");
 							}
 							else
 							{
-								//Logger.Msg("Found BuildInfo.json\n" + text);
-								return JsonAnalyzer.GetBuildInfoFromJson(text, Path.Combine(zipFilePath, internalPath));
+								Logger.Debug($"Reading buildinfo.json {zipFilePath}");
+								return JsonConvert.DeserializeObject<MCBuildInfo>(buildInfo);
 							}
+
 						}
+
 					}
 
-					Logger.Msg($"Cannot identify version because there is no BuildInfo.json in {zipFilePath}");
-					return new BuildInfoDetail();
 				}
+				if (!foundBuildInfo)
+				{
+					Logger.Warning($"Failed to find buildinfo.json {zipFilePath}");
+				}
+
 			}
+
+			return new MCBuildInfo();
+
 		}
-		internal static Encoding GetEncoding(MemoryStream memoryStream)
-		{
-			using StreamReader reader = new StreamReader(memoryStream, true);
-			reader.Peek();
-			return reader.CurrentEncoding;
-		}
-		internal static string ReadToString(MemoryStream memoryStream)
-		{
-			Encoding encoding = GetEncoding(memoryStream);
-			Logger.Msg(encoding.EncodingName);
-			return encoding.GetString(memoryStream.ToArray());
-		}
-		internal static string ReadToString2(MemoryStream memoryStream)
-		{
-			using StreamReader reader = new StreamReader(memoryStream, true);
-			//reader.Peek();
-			memoryStream.Position = 0;
-			//Logger.Msg(memoryStream.Position.ToString());
-			return reader.ReadToEnd();
-		}
+
 	}
 }

@@ -1,84 +1,38 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEngine.Rendering.RenderGraphModule.NativeRenderPassCompiler;
 
 namespace AutoUpdatingPlugin
 {
+
 	internal class APIMod
 	{
-		public string name { get; set; }
+		public string Name { get; set; }
+		public string Type { get; set; }
 		public string Author { get; set; }
-		public VersionData version { get; set; }
-		public string type { get; set; }
-		public bool enableUpdate { get; set; }
-		public string[] downloadlinks { get; set; }
-		public string[] aliases { get; set; }
-		public string[] dependencies { get; set; }
+		public string[] Aliases { get; set; }
+		public string[] Replaces { get; set; }
+		public string[] Dependencies { get; set; }
+		public string Version { get; set; }
+		public VersionData VersionData => new VersionData(Version);
+		public string Download { get; set; }
+		public string[] Downloads { get; set; }
+		public bool AutoUpdate { get; set; }
 		public bool canCheckDependencies { get; set; } = true;
 
-		public override string ToString() => name;
+		internal string CleanName => FileUtils.GetCleanName(Name);
 
-		internal bool ContainsDllFile()
+		internal bool DownloadContainsExtension(string ext = ".dll")
 		{
-			if (downloadlinks is null || downloadlinks.Length == 0)
+			if (Downloads is null || Downloads.Length == 0)
 			{
 				return false;
 			}
 
-			foreach (string link in downloadlinks)
+			foreach (string link in Downloads)
 			{
-				if (link.EndsWith(".dll"))
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
-		internal bool ContainsModComponentFile()
-		{
-			if (downloadlinks is null || downloadlinks.Length == 0)
-			{
-				return false;
-			}
-
-			foreach (string link in downloadlinks)
-			{
-				if (link.EndsWith(".modcomponent"))
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
-		internal bool ContainsModSceneFile()
-		{
-			if (downloadlinks is null || downloadlinks.Length == 0)
-			{
-				return false;
-			}
-
-			foreach (string link in downloadlinks)
-			{
-				if (link.EndsWith(".modscene"))
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
-		internal bool ContainsZipFile()
-		{
-			if (downloadlinks is null || downloadlinks.Length == 0)
-			{
-				return false;
-			}
-
-			foreach (string link in downloadlinks)
-			{
-				if (link.EndsWith(".zip"))
+				if (link.EndsWith(ext))
 				{
 					return true;
 				}
@@ -88,12 +42,15 @@ namespace AutoUpdatingPlugin
 
 		internal void ValidateDependencies(string[] validDependencies)
 		{
-			foreach (string? dependency in dependencies)
+			foreach (string? dependency in Dependencies)
 			{
-				if (!validDependencies.Contains(dependency))
+				string depName = FileUtils.GetCleanName(dependency);
+			Logger.Debug($"Dependency checking for {CleanName} >> {depName} {validDependencies.Contains(depName)}");
+
+				if (!validDependencies.Contains(depName))
 				{
 					canCheckDependencies = false;
-					Logger.Warning($"Dependency checking for {name} has been disabled because of invalid dependency references.");
+					Logger.Warning($"Dependency checking for {CleanName} has been disabled because of invalid dependency references -> {depName}.");
 					return;
 				}
 			}
@@ -101,19 +58,19 @@ namespace AutoUpdatingPlugin
 
 		internal bool CanUseToUpdate()
 		{
-			return enableUpdate && downloadlinks != null && downloadlinks.Length > 0 && !ContainsModSceneFile();
+			return AutoUpdate && Downloads != null && Downloads.Length > 0;
 		}
 
 		internal string[] GetFileNames()
 		{
-			if (downloadlinks is null || downloadlinks.Length == 0)
+			if (Downloads is null || Downloads.Length == 0)
 			{
 				return new string[0];
 			}
 
-			List<string> result = new List<string>(downloadlinks.Length);
+			List<string> result = new List<string>(Downloads.Length);
 
-			foreach (string link in downloadlinks)
+			foreach (string link in Downloads)
 			{
 				if (!string.IsNullOrWhiteSpace(link))
 				{
@@ -123,5 +80,7 @@ namespace AutoUpdatingPlugin
 
 			return result.ToArray();
 		}
+
 	}
+
 }

@@ -6,7 +6,7 @@ namespace AutoUpdatingPlugin.ConsoleApp
 	{
 		static void Main(string[] args)
 		{
-			Implementation.UpdateMods(@"C:\Program Files (x86)\Steam\steamapps\common\TheLongDark", false);
+			Implementation.Run(@"C:\Program Files (x86)\Steam\steamapps\common\TheLongDark", false);
 		}
 	}
 }

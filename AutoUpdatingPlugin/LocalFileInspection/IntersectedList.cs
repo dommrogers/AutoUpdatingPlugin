@@ -15,30 +15,36 @@ namespace AutoUpdatingPlugin
 			stringInstalledMods.Clear();
 			installedApiMods.Clear();
 
-//			Logger.Msg("Generating an intersection of installed mods and the supported api...");
+			//			Logger.Msg("Generating an intersection of installed mods and the supported api...");
 			foreach (KeyValuePair<string, InstalledModDetail> installedMod in InstalledModList.installedMods)
 			{
+				string InstalledName = FileUtils.GetCleanName(installedMod.Key);
+//				Logger.Debug($"Checking: {InstalledName}");
+
 				bool foundApiEntry = false;
-				foreach (KeyValuePair<string, APIMod> remoteMod in APIList.validMods)
+				foreach (KeyValuePair<string, APIMod> remoteMod in APIList.allMods)
 				{
-					if (installedMod.Key.ToLowerInvariant() == remoteMod.Key.ToLowerInvariant())
+					string RemoteName = FileUtils.GetCleanName(remoteMod.Key);
+//					Logger.Debug($"Checking: {InstalledName} | {RemoteName}");
+					if (InstalledName == RemoteName)
 					{
 						foundApiEntry = true;
-						stringApiMods.TryAdd(remoteMod.Key.ToLowerInvariant(), remoteMod.Value);
-						stringInstalledMods.TryAdd(installedMod.Key.ToLowerInvariant(), installedMod.Value);
+						stringApiMods.TryAdd(RemoteName, remoteMod.Value);
+						stringInstalledMods.TryAdd(InstalledName, installedMod.Value);
 						installedApiMods.TryAdd(installedMod.Value, remoteMod.Value);
-//						Logger.Msg($"Match: {installedMod.Key.ToLowerInvariant()} => {remoteMod.Key.ToLowerInvariant()}");
+						Logger.Debug($"Installed: {InstalledName} {installedMod.Value.Version} => API: {RemoteName} {remoteMod.Value.Version}");
 						break;
 					}
-					foreach (string alias in remoteMod.Value.aliases)
+					foreach (string alias in remoteMod.Value.Aliases)
 					{
-						if (installedMod.Key.ToLowerInvariant() == alias.ToLowerInvariant())
+						string AliasName = FileUtils.GetCleanName(alias);
+						if (InstalledName == AliasName)
 						{
 							foundApiEntry = true;
-							stringApiMods.TryAdd(remoteMod.Key.ToLowerInvariant(), remoteMod.Value);
-							stringInstalledMods.TryAdd(installedMod.Key.ToLowerInvariant(), installedMod.Value);
+							stringApiMods.TryAdd(RemoteName, remoteMod.Value);
+							stringInstalledMods.TryAdd(InstalledName, installedMod.Value);
 							installedApiMods.TryAdd(installedMod.Value, remoteMod.Value);
-//							Logger.Msg($"Match Alias: {installedMod.Key.ToLowerInvariant()} => {alias.ToLowerInvariant()}");
+							Logger.Debug($"Installed: {InstalledName} {installedMod.Value.Version} => API(Alias): {RemoteName}|{AliasName} {remoteMod.Value.Version}");
 							break;
 						}
 					}

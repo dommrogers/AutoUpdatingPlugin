@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -10,7 +10,10 @@ namespace AutoUpdatingPlugin
 	{
 		public static int progressTotal = 0, progressDownload = 0;
 		private static int toUpdateCount = 0;
+		private static int updatedCount = 0;
 		private static readonly List<FailedUpdateInfo> failedUpdates = new List<FailedUpdateInfo>();
+
+		internal static bool pluginUpdated = false;
 
 		private static void LogProgress()
 		{
@@ -18,13 +21,17 @@ namespace AutoUpdatingPlugin
 			{
 				Logger.Success("All installed mods are already up to date !");
 			}
-			else if (failedUpdates.Count > 0)
+			if (failedUpdates.Count > 0)
 			{
 				Logger.Warning($"{failedUpdates.Count} mods failed to update ({toUpdateCount - failedUpdates.Count}/{toUpdateCount} succeeded)");
+				foreach (FailedUpdateInfo f in failedUpdates)
+				{
+					Logger.Warning($"- {f.mod.CleanName} >> {f.reason} >> {f.message}");
+				}
 			}
-			else
+			if(updatedCount > 0) 
 			{
-				Logger.Success("Successfully updated " + toUpdateCount + " mods !");
+				Logger.Success("Successfully updated " + updatedCount + " mods !");
 			}
 		}
 
@@ -42,13 +49,13 @@ namespace AutoUpdatingPlugin
 				{
 					toUpdate.Add(new Tuple<InstalledModDetail, APIMod>(installedMod, remoteMod));
 				}
-				else if (remoteMod.CanUseToUpdate() && installedMod.CanBeUpdated())
+				else if (installedMod.CanBeUpdated())
 				{
 					VersionData installedModVersion = installedMod.GetMinValidVersion();
-					VersionData remoteModVersion = remoteMod.version;
+					VersionData remoteModVersion = remoteMod.VersionData;
 #if DEBUG
 					int compareResult = remoteModVersion.CompareTo(installedModVersion);
-					Logger.Msg($"Version comparison between [remote] {remoteMod.version.ToString(3)} and [local] {installedModVersion.ToString(3)} for ({remoteMod.name}): " + compareResult);
+					Logger.Debug($"Version comparison between [remote] {remoteMod.Version} and [local] {installedModVersion.ToString(3)} for ({remoteMod.CleanName}): " + compareResult);
 #endif
 					if (installedModVersion < remoteModVersion)
 					{
@@ -66,16 +73,24 @@ namespace AutoUpdatingPlugin
 
 			for (int i = 0; i < toUpdateCount; ++i)
 			{
+				int ii = i + 1;
 				InstalledModDetail installedMod = toUpdate[i].Item1;
 				APIMod apiMod = toUpdate[i].Item2;
 
-				Logger.Msg($"Updating '{installedMod.name}' ({i + 1} / {toUpdateCount})...");
+				if(APIList.IsDisabled(apiMod.CleanName))
+				{
+					failedUpdates.Add(new FailedUpdateInfo(installedMod, FailedUpdateReason.Disabled, APIList.GetDisabledReason(apiMod.CleanName) ?? ""));
+					continue;
+				}
+
+				Logger.Minor($"Updating '{installedMod.CleanName}' ({ii} / {toUpdateCount})...");
 				progressTotal = (int)(i / (double)toUpdateCount * 100);
 
 				UpdateInstallation(installedMod, apiMod);
 
-				progressTotal = (int)((i + 1) / (double)toUpdateCount * 100);
-				Logger.Minor($"Progress: {i + 1}/{toUpdateCount} -> {progressTotal}%");
+				progressTotal = (int)((ii) / (double)toUpdateCount * 100);
+				Logger.Debug($"Progress: {ii}/{toUpdateCount} -> {progressTotal}%");
+				updatedCount++;
 
 			}
 
@@ -95,7 +110,7 @@ namespace AutoUpdatingPlugin
 				{
 					if (e.Error != null)
 					{
-						Logger.Error("Failed to download " + installedMod.name + ":\n" + e.Error);
+						Logger.Error("Failed to download " + installedMod.CleanName + ":\n" + e.Error);
 						errored = true;
 						failedUpdates.Add(new FailedUpdateInfo(installedMod, FailedUpdateReason.DownloadError, e.ToString() ?? ""));
 					}
@@ -106,7 +121,7 @@ namespace AutoUpdatingPlugin
 
 					downloading = false;
 				};
-				foreach (string link in apiMod.downloadlinks)
+				foreach (string link in apiMod.Downloads)
 				{
 					downloading = true;
 					buffer = null;
@@ -117,7 +132,13 @@ namespace AutoUpdatingPlugin
 						Thread.Sleep(50);
 					}
 
-					downloadedData.Add((FileUtils.GetDestination(link), buffer));
+					if (apiMod.Type == "plugin")
+					{
+						pluginUpdated = true;
+						downloadedData.Add((FileUtils.GetDestinationPlugin(link), buffer));
+					} else {
+						downloadedData.Add((FileUtils.GetDestination(link), buffer));
+					}
 				}
 
 
@@ -125,18 +146,27 @@ namespace AutoUpdatingPlugin
 				{
 					try
 					{
-						foreach (InstalledFileDetail oldFile in installedMod.files)
+						foreach (InstalledFileDetail oldFile in installedMod.Files)
 						{
-							File.Delete(oldFile.filepath);
+							try
+							{
+	//							Logger.Msg($"Deleting {oldFile.filepath}");
+								File.Delete(oldFile.filepath);
+							} catch (Exception e)
+							{
+//								Logger.Msg($"NOPE! Deleting {oldFile.filepath}, lets rename it instead");
+								File.Move(oldFile.filepath,oldFile.filepath + ".rem");
+							}
 						}
 						foreach ((string, byte[]?) modFile in downloadedData)
 						{
+							Logger.Msg($"Writing to {modFile.Item1}");
 							File.WriteAllBytes(modFile.Item1, modFile.Item2);
 						}
 					}
 					catch (Exception e)
 					{
-						Logger.Error("Failed to save replacement files for " + installedMod.name + ":\n" + e);
+						Logger.Error("Failed to save replacement files for " + installedMod.CleanName + ":\n" + e);
 						failedUpdates.Add(new FailedUpdateInfo(installedMod, FailedUpdateReason.SaveError, e.ToString()));
 						return;
 					}
@@ -145,7 +175,7 @@ namespace AutoUpdatingPlugin
 			}
 			catch (Exception e)
 			{
-				Logger.Error("Failed to update " + installedMod.name + ":\n" + e);
+				Logger.Error("Failed to update " + installedMod.CleanName + ":\n" + e);
 				failedUpdates.Add(new FailedUpdateInfo(installedMod, FailedUpdateReason.Unknown, e.ToString()));
 			}
 

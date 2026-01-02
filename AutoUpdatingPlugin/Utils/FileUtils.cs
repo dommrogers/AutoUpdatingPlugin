@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MelonLoader.Utils;
+using System;
 using System.IO;
 
 namespace AutoUpdatingPlugin
@@ -11,8 +12,8 @@ namespace AutoUpdatingPlugin
 
 		static FileUtils()
 		{
-			PluginsFolder = Path.Combine(Implementation.GameDirectory, "Plugins");
-			ModsFolder = Path.Combine(Implementation.GameDirectory, "Mods");
+			PluginsFolder = Path.Combine(Implementation.GameFolder, "Plugins");
+			ModsFolder = Path.Combine(Implementation.GameFolder, "Mods");
 		}
 
 		public static string GetDestination(string link)
@@ -36,7 +37,7 @@ namespace AutoUpdatingPlugin
 
 		internal static string GetCleanName(string name)
 		{
-			return name.Replace("'", null).Replace(" ", null).Replace("-", null).Replace("_", null).Replace(".", null);
+			return name.Replace("'", null).Replace(" ", null).Replace("-", null).Replace("_", null).Replace(".", null).ToLowerInvariant();
 		}
 
 	}

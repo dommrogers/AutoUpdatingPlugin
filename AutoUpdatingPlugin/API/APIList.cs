@@ -3,130 +3,161 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
 
 namespace AutoUpdatingPlugin
 {
 	internal static class APIList
 	{
-		private static readonly Dictionary<string, string> oldToNewModNames = new Dictionary<string, string>()
+		private static readonly Dictionary<string, string> aliasNames = new Dictionary<string, string>()
 		{
 			// Used in case something is missing on the API
 		};
 
+		private static readonly Dictionary<string, string> replacements = new Dictionary<string, string>();
+
 		internal static Dictionary<string, APIMod> allMods = new Dictionary<string, APIMod>();
 		internal static readonly Dictionary<string, APIMod> validMods = new Dictionary<string, APIMod>();
 		internal static readonly Dictionary<string, APIMod> supportedMods = new Dictionary<string, APIMod>();
+
+		internal static List<string> disabledByAuthor { get; set; }  = new List<string>();
+		internal static List<string> disabledNoValidLink { get; set; } = new List<string>();
+
 		internal static void FetchRemoteMods()
 		{
+			Logger.Minor("Attempting to download from API site...");
+
 			Stopwatch sw = new Stopwatch();
 			sw.Start();
-//			Logger.Minor("Fetching remote mods...");
+			//			Logger.Minor("Fetching remote mods...");
 			string apiResponse = "";
 			using (WebClient? client = new WebClient())
 			{
 				client.Headers["User-Agent"] = "AutoUpdatingPlugin";
-				//			Logger.Minor("Attempting to download from API site...");
-				apiResponse = client.DownloadString("https://www.tldmods.com/api.json");
+				
+				apiResponse = client.DownloadString("https://tldmods.com/api.php");
 			}
-//			apiResponse = File.ReadAllText(@"C:\REPOS\ModLists\api.json");
-			Logger.Msg($"Downloaded mod API data (L:{apiResponse.Length}) ({(float)sw.ElapsedMilliseconds/1000:N2}s)");
-
-
+			//			apiResponse = File.ReadAllText(@"C:\REPOS\ModLists\api.json");
+#if DEBUG
+			Logger.Msg($"Downloaded API data (L:{apiResponse.Length}) ({(float)sw.ElapsedMilliseconds / 1000:N2}s)");
+#endif
 			APIMod[] apiMods = APIReader.Deserialize(apiResponse);
 
+			allMods.Clear();
+			validMods.Clear();
 			supportedMods.Clear();
 
-			List<string> disabledByAuthor = new List<string>();
-			List<string> disabledByLargeFile = new List<string>();
-			List<string> disabledNoValidLink = new List<string>();
+			disabledByAuthor.Clear();
+			disabledNoValidLink.Clear();
 
 
 			foreach (APIMod mod in apiMods)
 			{
 
-				if(allMods.TryGetValue(mod.name, out APIMod existing))
+				string modName = mod.CleanName;
+
+				if (allMods.TryGetValue(modName, out APIMod existing))
 				{
-					Logger.Warning($"Duplicate Mod in API: {mod.name} => {mod.Author}:{mod.version.ToString()} <> {existing.Author}:{existing.version.ToString()}");
-					if (mod.version >= existing.version)
+					Logger.Warning($"Duplicate Mod in API: {modName} => {mod.Author}:{mod.Version} <> {existing.Author}:{existing.Version}");
+					if (mod.VersionData >= existing.VersionData)
 					{
-						Logger.Warning($"Using {mod.name} => {mod.Author}:{mod.version.ToString()}");
-						allMods.Remove(mod.name);
-						validMods.Remove(mod.name);
-						supportedMods.Remove(mod.name);
+						Logger.Warning($"Using {modName} => {mod.Author}:{mod.Version}");
+						allMods.Remove(modName);
+						validMods.Remove(modName);
+						supportedMods.Remove(modName);
 					}
-					if (mod.version <= existing.version)
+					if (mod.VersionData <= existing.VersionData)
 					{
-						Logger.Warning($"Using {mod.name} => {existing.Author}:{existing.version.ToString()}");
+						Logger.Warning($"Using {modName} => {existing.Author}:{existing.Version}");
 						continue;
 					}
 				}
 
-				allMods.Add(mod.name, mod);
-
-				if (mod.ContainsModSceneFile())
-				{
-					disabledByLargeFile.Add(mod.name);
-//					Logger.Msg($"Automatic updating for {mod.name} has been disabled due to potentially large file sizes.");
-					continue;
-				}
-
-				if (mod.downloadlinks.Length == 0)
-				{
-					disabledNoValidLink.Add(mod.name);
-//					Logger.Msg($"Automatic updating for {mod.name} has been disabled due to having no valid download links.");
-					continue;
-				}
-
-				validMods.Add(mod.name, mod);
-
-				if (!mod.enableUpdate)
-				{
-					disabledByAuthor.Add(mod.name);
-					//					Logger.Msg($"Automatic updating for {mod.name} has been disabled by the mod author.");
-					continue;
-				}
+				allMods.Add(modName, mod);
+				//Logger.Debug($"allMods : {modName}");
 
 				// Aliases
-				foreach (string alias in mod.aliases)
+				foreach (string alias in mod.Aliases)
 				{
-					if (alias != mod.name && !oldToNewModNames.ContainsKey(alias))
+					string _alias = alias.ToLowerInvariant();
+					if (_alias != modName.ToLowerInvariant() && !aliasNames.ContainsKey(_alias))
 					{
-						oldToNewModNames[alias] = mod.name;
+						aliasNames[_alias] = modName;
 					}
 				}
 
+				// Replacements
+				foreach (string replace in mod.Replaces)
+				{
+					string _replace = replace.ToLowerInvariant();
+					if (_replace != modName.ToLowerInvariant() && !replacements.ContainsKey(_replace))
+					{
+						replacements[_replace] = modName;
+					}
+				}
+
+				if (!mod.AutoUpdate)
+				{
+					disabledByAuthor.Add(modName);
+					//Logger.Debug($"disabledByAuthor : {modName}");
+					continue;
+				}
+
+				if (mod.Downloads.Length == 0)
+				{
+					disabledNoValidLink.Add(modName);
+					//Logger.Debug($"disabledNoValidLink : {modName}");
+					continue;
+				}
+
+				validMods.Add(modName, mod);
+				//Logger.Debug($"validMods : {modName}");
+
 				// Add to supported mods
-				supportedMods.Add(mod.name, mod);
+				supportedMods.Add(modName, mod);
 			}
 
-			if (disabledByAuthor.Count > 0)
-			{
-				Logger.Msg($"# Update Disabled - By Author:");
-				Logger.Minor(string.Join(", ", disabledByAuthor));
-			}
-			if (disabledByLargeFile.Count > 0)
-			{
-				Logger.Msg($"# Update Disabled - Has Large Files:");
-				Logger.Minor(string.Join(", ", disabledByLargeFile));
-			}
-			if (disabledNoValidLink.Count > 0)
-			{
-				Logger.Msg($"# Update Disabled - No Valid Link:");
-				Logger.Minor(string.Join(", ", disabledNoValidLink));
-			}
-
-
-			//Logger.Minor("AllMods: " + string.Join(",", allMods.Keys));
-			//Logger.Minor("SupportedMods: " + string.Join(",", supportedMods.Keys));
+#if DEBUG
+			File.WriteAllText(Path.Combine(FileUtils.PluginsFolder, "allMods.json"), JsonSerializer.Serialize(allMods.Keys.ToArray(), new JsonSerializerOptions() { WriteIndented = true }));
+			File.WriteAllText(Path.Combine(FileUtils.PluginsFolder, "validMods.json"), JsonSerializer.Serialize(validMods.Keys.ToArray(), new JsonSerializerOptions() { WriteIndented = true }));
+			File.WriteAllText(Path.Combine(FileUtils.PluginsFolder, "replacements.json"), JsonSerializer.Serialize(replacements, new JsonSerializerOptions() { WriteIndented = true }));
+			File.WriteAllText(Path.Combine(FileUtils.PluginsFolder, "disabledByAuthor.json"), JsonSerializer.Serialize(disabledByAuthor, new JsonSerializerOptions() { WriteIndented = true }));
+			File.WriteAllText(Path.Combine(FileUtils.PluginsFolder, "disabledNoValidLink.json"), JsonSerializer.Serialize(disabledNoValidLink, new JsonSerializerOptions() { WriteIndented = true }));
+#endif
 
 			sw.Stop();
-			Logger.Msg("API Mods " + apiMods.Length + ", Valid " + validMods.Count+ ", Supported " + supportedMods.Count + $" ({(float)sw.ElapsedMilliseconds/1000:N2}s)");
+			Logger.Msg("API Mods " + apiMods.Length + ", Valid " + validMods.Count + ", Supported " + supportedMods.Count + $" ({(float)sw.ElapsedMilliseconds / 1000:N2}s)");
 		}
-		internal static string GetNewModName(string currentName)
+		internal static bool IsReplaced(string currentName)
 		{
-			return oldToNewModNames.TryGetValue(currentName, out string? newName) ? newName : currentName;
+			bool result = replacements.ContainsKey(currentName.ToLowerInvariant());
+			//			Logger.Msg($"IsReplaced {currentName}|{currentName.ToLowerInvariant()} >> {result}");
+			return result;
 		}
-		internal static bool IsAliasName(string currentName) => oldToNewModNames.ContainsKey(currentName);
+		internal static string GetReplacementName(string currentName)
+		{
+			return replacements.TryGetValue(currentName.ToLowerInvariant(), out string? newName) ? newName : currentName;
+		}
+
+		internal static bool IsAlias(string currentName) => aliasNames.ContainsKey(currentName.ToLowerInvariant());
+		internal static string GetNameFromAlias(string currentName)
+		{
+			return aliasNames.TryGetValue(currentName.ToLowerInvariant(), out string? newName) ? newName : currentName;
+		}
+
+		internal static bool IsDisabled(string currentName) => disabledByAuthor.Contains(currentName.ToLowerInvariant()) || disabledNoValidLink.Contains(currentName.ToLowerInvariant());
+		internal static string GetDisabledReason(string currentName)
+		{
+			if (disabledByAuthor.Contains(currentName.ToLowerInvariant()))
+			{
+				return "by Author";
+			}
+			if (disabledNoValidLink.Contains(currentName.ToLowerInvariant()))
+			{
+				return "by NoValidLink";
+			}
+			return null;
+		}
 
 		internal static string[] GetModNames() => validMods.Keys.ToArray();
 		internal static string[] GetSortedModNames()

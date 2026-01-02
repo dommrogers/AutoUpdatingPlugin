@@ -4,24 +4,30 @@ namespace AutoUpdatingPlugin
 {
 	internal class InstalledModDetail
 	{
-		public string name;
-		public List<InstalledFileDetail> files = new List<InstalledFileDetail>();
+		public string Name { get; private set; }
+		public string CleanName => FileUtils.GetCleanName(Name);
+		public List<InstalledFileDetail> Files = new List<InstalledFileDetail>();
 		public bool Outdated { get; private set; }
+		public bool Remove { get; private set; }
+
+		public string Version => GetMinValidVersion().ToString();
+		public string Type { get; private set; }
 
 		public InstalledModDetail(string name)
 		{
-			this.name = name;
+			this.Name = name;
 			this.Outdated = false;
+			this.Remove = false;
 		}
 
-		public override string ToString() => name;
+		public override string ToString() => CleanName;
 
 		private VersionData[] GetVersionList()
 		{
-			VersionData[]? result = new VersionData[files.Count];
+			VersionData[]? result = new VersionData[Files.Count];
 			for (int i = 0; i < result.Length; i++)
 			{
-				result[i] = files[i].version;
+				result[i] = Files[i].version;
 			}
 			return result;
 		}
@@ -64,5 +70,6 @@ namespace AutoUpdatingPlugin
 		public bool CanBeUpdated() => GetMinValidVersion().IsValidSemver;
 
 		public void TriggerOutdated() => Outdated = true;
+		public void TriggerRemoval() => Remove = true;
 	}
 }

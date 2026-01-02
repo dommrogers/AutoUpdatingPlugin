@@ -20,7 +20,7 @@
 			this.name = name;
 			this.filepath = filepath;
 			this.fileType = fileType;
-			this.version = (VersionData)version;
+			this.version = new VersionData(version);
 		}
 
 		public override string ToString() => name;

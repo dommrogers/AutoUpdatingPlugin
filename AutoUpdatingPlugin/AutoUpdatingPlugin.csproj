@@ -9,7 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="STBlade.Modding.TLD.Il2CppAssemblies.Windows" Version="2.25.0" />
+	  <PackageReference Include="STBlade.Modding.TLD.Il2CppAssemblies.Windows" Version="2.51.0" />
 	</ItemGroup>
 
 </Project>

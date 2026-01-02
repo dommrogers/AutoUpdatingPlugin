@@ -32,11 +32,11 @@ namespace AutoUpdatingPlugin
 			ModComponentScanner.ScanForModComponentFiles();
 
 			//has to run first
-			DllFileChecker.ScanForDllFiles(FileUtils.ModsFolder);
 			DllFileChecker.ScanForDllFiles(FileUtils.PluginsFolder);
+			DllFileChecker.ScanForDllFiles(FileUtils.ModsFolder);
 
 #if DEBUG
-			File.WriteAllText("installedMods.json", JsonSerializer.Serialize(installedMods, new JsonSerializerOptions() { WriteIndented = true }));
+			File.WriteAllText(Path.Combine(FileUtils.PluginsFolder,"installedMods.json"), JsonSerializer.Serialize(installedMods, new JsonSerializerOptions() { WriteIndented = true }));
 			Logger.Minor("Write installedMods.json");
 #endif
 
